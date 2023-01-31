@@ -83,7 +83,6 @@ contract VotedToken {
         return true;
     }
 
-
     function createVoter(address newVoter) external returns (bool){
         //only the owner can add a voter
         require(msg.sender == owner,"only owner can add a new voter");
