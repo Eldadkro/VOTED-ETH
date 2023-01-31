@@ -96,5 +96,5 @@ contract VotedToken {
         _total += 1;
         emit NewVoter(_total);
         return true;
-    }
+    } 
 }

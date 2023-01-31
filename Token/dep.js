@@ -49,6 +49,7 @@ web3.eth.getTransactionCount(address, async (err, nonce) => {
     web3.eth.sendSignedTransaction(rawTx)
         .on('receipt', receipt => {
             console.log(receipt)
+            fs.writeFile("contractaddress.txt",receipt.contractAddress)
         }).catch(err => {
             console.log(err)
         })
