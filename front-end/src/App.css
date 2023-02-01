@@ -3,7 +3,7 @@
 }
 
 .App-logo {
-  height: 40vmin;
+  height: 7vmin;
   pointer-events: none;
 }
 
@@ -27,6 +27,45 @@
 .App-link {
   color: #61dafb;
 }
+
+.title {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  background-color: #282c34;
+  color: white;
+  justify-content: center;
+
+}
+
+.test {
+  background-color: black;
+}
+
+.deploy-panel{
+  border: #282c34;
+  border-style: solid;
+  padding: 2px;
+}
+.control-panels{
+  width: 50vw;
+  align-items: center;
+  padding: 0.5vw;
+}
+
+.text-box {
+  width: 68ex;
+  height: 2ex;
+}
+
+.plot-panel{
+  align-items: center;
+  align-content: center;
+  justify-content: center;
+  padding: 1vw;
+}
+
+.panels{display:flex; flex-direction:row;}
 
 @keyframes App-logo-spin {
   from {
