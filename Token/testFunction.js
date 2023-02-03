@@ -20,46 +20,48 @@ const contract = new web3.eth.Contract(abi,contract_addr.toString())
 
 
 //total voters
-contract.methods.totalVoters().call().then(result => console.log(result))
+// contract.methods.totalVoters().call().then(result => console.log(result))
 
-//voting rights
-contract.methods.votingRights(address).call().then(result => console.log(result))
+// //voting rights
+// contract.methods.votingRights(address).call().then(result => console.log(result))
 
-//ballot
-contract.methods.ballot("0x90f8bf6a479f320ead074411a4b0e7944ea8c9c1").call().then(result => console.log(result))
+contract.methods.getBallotsAddr().call().then(result => console.log(result)) 
 
-//add new voter
-await contract.methods.createVoter(address).send({
-    from:address,
-    gasPrice: web3.utils.toHex(web3.utils.toWei('20', 'gwei')),
-    gas: web3.utils.toHex(6000000)
-})
-.on('receipt', receipt =>{
-    console.log(receipt)
-})
-.on('error',err => {
-    console.log(err)
-})
-
-
-//vote
-await contract.methods.vote("0x90f8bf6a479f320ead074411a4b0e7944ea8c9c1").send({
-    from:address,
-    gasPrice: web3.utils.toHex(web3.utils.toWei('20', 'gwei')),
-    gas: web3.utils.toHex(6000000)
-})
-.on('receipt', receipt =>{
-    console.log("voted")
-})
-.on('error',err => {
-    console.log(err)
-})
-
-await contract.methods.ballot("0x90f8bf6a479f320ead074411a4b0e7944ea8c9c1").call().then(result => console.log(result))
+// //ballot
+// contract.methods.ballot("0x90f8bf6a479f320ead074411a4b0e7944ea8c9c1").call().then(result => console.log(result))
 
 
 
-//vote 
+// //add new voter
+// await contract.methods.createVoter(address).send({
+//     from:address,
+//     gasPrice: web3.utils.toHex(web3.utils.toWei('20', 'gwei')),
+//     gas: web3.utils.toHex(6000000)
+// })
+// .on('receipt', receipt =>{
+//     console.log(receipt)
+// })
+// .on('error',err => {
+//     console.log(err)
+// })
+
+
+// //vote
+// await contract.methods.vote("0x90f8bf6a479f320ead074411a4b0e7944ea8c9c1").send({
+//     from:address,
+//     gasPrice: web3.utils.toHex(web3.utils.toWei('20', 'gwei')),
+//     gas: web3.utils.toHex(6000000)
+// })
+// .on('receipt', receipt =>{
+//     console.log("voted")
+// })
+// .on('error',err => {
+//     console.log(err)
+// })
+
+// await contract.methods.ballot("0x90f8bf6a479f320ead074411a4b0e7944ea8c9c1").call().then(result => console.log(result))
+
+
 
 
 

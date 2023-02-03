@@ -96,4 +96,10 @@ contract VotedToken {
         emit NewVoter(_total);
         return true;
     } 
+    
+    function getBallotsAddr() public view returns (address [] memory ){
+        return ballots_addr;
+    }
+
+
 }
