@@ -9,34 +9,6 @@ const Contex_pk = createContext()
 const providerUrl = 'http://127.0.0.1:8545'
 const contract_path = './contract/'
 
-// export function KeysPanel(props) {
-
-//     const privateKey = useRef(null)
-//     const [a, seta] = useState('')
-
-//     function addOwner(e) {
-//         if (privateKey.current.value == null ||
-//             privateKey.current.value.length < 66) {
-//             console.log("not ready")
-//             return
-//         }
-//         // props.handleOwner(privateKey.current.value)
-//         const web3 = new Web3(providerUrl)
-//         const acc = web3.eth.accounts.privateKeyToAccount(privateKey.current.value)
-//         seta(acc.address)
-//         props.handleOwner(privateKey.current.value)
-
-//     }
-
-//     return (
-//         <div className='deploy-panel'>
-//             <h3>Owner's private-key: </h3><input type={'text'} defaultValue={"private-key"} className={"text-box"} ref={privateKey} />
-//             {a}
-//             <h2><button onClick={addOwner}>enter-keys</button></h2>
-//         </div>
-//     );
-// }
-
 
 
 export function DeployComp(props) {
