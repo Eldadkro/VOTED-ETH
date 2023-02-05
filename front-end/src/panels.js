@@ -105,7 +105,7 @@ export function DeployComp(props) {
 }
 
 
-export function VoteButton({ ballot }) {
+export function VoteButton({ ballot, setstatus }) {
 
     const contractContext = useContext(ContextContract)
     const Owner_pk = useContext(Contex_pk)
@@ -117,11 +117,26 @@ export function VoteButton({ ballot }) {
         web3.eth.accounts.wallet.add(Owner_pk)
         const abi = JSON.parse(await fetch(ContAbi).then((res) => res.text()))
         const contract = new web3.eth.Contract(abi, contractContext.addr)
-        contract.methods.vote(ballot.address).send({
-            from: web3.eth.accounts.privateKeyToAccount(Owner_pk).address,
-            gas: await contract.methods.vote(ballot.address).estimateGas()
-        })
-            .on('recipt', (res) => console.log("yay"))
+        try {
+            const gas = await contract.methods.vote(ballot.address).estimateGas({ from: web3.eth.accounts.privateKeyToAccount(Owner_pk).address })
+
+            contract.methods.vote(ballot.address).send({
+                from: web3.eth.accounts.privateKeyToAccount(Owner_pk).address,
+                gas: web3.utils.toHex(gas)
+            })
+                .on('receipt', (res) => {
+                    console.log("yay")
+                    setstatus('success')
+                })
+                .on('error', err => {
+                    console.log(err)
+                    setstatus('failed')
+                })
+        }
+        catch {
+            setstatus('failed')
+            return;
+        }
     }
 
     return <button onClick={vote}>{ballot.name}</button>
@@ -133,6 +148,7 @@ export function Voting(props) {
     const owner_pk = useContext(Contex_pk)
     const [web3, x] = useState(new Web3(providerUrl))
     const [votingButtons, setvotingButtons] = useState()
+    const [voting_status, setvoting_status] = useState('')
     const CaddressText = useRef()
     let contract
     useEffect(() => {
@@ -165,7 +181,7 @@ export function Voting(props) {
         })
 
         Promise.all(ballots).then(bal => {
-            setvotingButtons(bal.map(ballot => (<VoteButton ballot={ballot} />)))
+            setvotingButtons(bal.map(ballot => (<VoteButton key={ballot.name} ballot={ballot} setstatus={status => setvoting_status(status)} />)))
         })
 
 
@@ -177,6 +193,7 @@ export function Voting(props) {
             <h3>Voting</h3>
             contract address:<input className='text-box' type={'text'} ref={CaddressText} /><button onClick={enterContract}>enter</button>
             <div>{votingButtons}</div>
+            {voting_status}
         </div>)
 
 }
@@ -186,31 +203,46 @@ export function CreateVoter() {
     const owner_pk = useContext(Contex_pk)
     const contractHandle = useContext(ContextContract)
     const text_voter = useRef()
-    const [web3,setweb3] = useState(new Web3(providerUrl))
-    const [result,setResults] = useState('')
+    const [web3, setweb3] = useState(new Web3(providerUrl))
+    const [result, setResults] = useState('')
     async function createvoter(e) {
-        if(owner_pk == null)
-            return
-        if(text_voter.current.value == null)
-            return
-        if(text_voter.current.value.length !=  42)
-            return
-        if(contractHandle.addr == null)
-            return  
-        web3.eth.accounts.wallet.add(owner_pk)
+        if (owner_pk == null)
+            return;
+        if (text_voter.current.value == null)
+            return;
+        if (text_voter.current.value.length != 42)
+            return;
+        if (contractHandle.addr == null)
+            return;
+        // console.log(owner_pk)
+        web3.eth.accounts.wallet.clear()
+        // web3.eth.accounts.wallet.add(owner_pk)
+        // console.log(web3.eth.accounts.wallet)
         const abi = (await (await fetch(ContAbi)).json())
-        const contract = new web3.eth.Contract(abi,contractHandle.addr)
-        console.log(text_voter)
-        contract.methods.createVoter(text_voter.current.value).call({
-            from : owner_pk
-        }).on('recipt',res=>setResults())
+        const contract = new web3.eth.Contract(abi, contractHandle.addr)
+        console.log(contract.defaultAccount)
+        // console.log(web3.eth.accounts.privateKeyToAccount(owner_pk).address)
+        // console.log(web3.eth.defaultAccount)
+        const gas = await contract.methods.createVoter(text_voter.current.value).estimateGas({ from: web3.eth.accounts.privateKeyToAccount(owner_pk).address })
+        console.log(gas)
+        contract.methods.createVoter(text_voter.current.value).send({
+            from: web3.eth.accounts.privateKeyToAccount(owner_pk).address,
+            gasLimit: web3.utils.toHex(gas + 100),
+            gasPrice: web3.utils.toHex(2000000000)
+        }).on('receipt', res => {
+            console.log(res)
+            setResults("created")
+        }).on('error', err => {
+            setResults("couldn't create")
+            console.log(err)
+        })
     }
     return (
         <div className='deploy-panel'>
             <h3>Create a new Voter</h3>
-            voters address:<input type={'text'} className='text-box' ref={text_voter} />
+            voters address:<input type={'text'} className='text-box' ref={text_voter} /><button onClick={createvoter}>Create</button>
             <div>
-                <button onClick={createvoter}>Create</button>,voter {result}
+                voter: {result}
             </div>
         </div>
     );
