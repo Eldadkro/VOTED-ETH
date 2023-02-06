@@ -27,7 +27,7 @@ export default function BarPlot() {
     const interval = useRef(null)
 
     useEffect(()=>{
-        web3Ref.current = new Web3(providerUrl)
+        web3Ref.current = new Web3(window.ethereum)
     },[])
 
     useEffect(()=>{

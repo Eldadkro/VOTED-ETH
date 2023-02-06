@@ -1,9 +1,10 @@
 import './App.css';
 import React, { createContext, useContext, useEffect, useRef, useState } from "react";
-import Web3, { eth } from 'web3';
+import Web3 from 'web3';
 import ContByte from './contact/VotedToken_sol_VotedToken.bin';
 import ContAbi from './contact/VotedToken_sol_VotedToken.abi';
 import { ContextContract } from './App'
+import BallotsList from './BallotsList';
 
 const Contex_pk = createContext()
 const providerUrl = 'http://127.0.0.1:8545'
@@ -16,16 +17,14 @@ export function DeployComp(props) {
     const [gas, setGas] = useState(0)
     const [cAddress, setCAddress] = useState('')
     const Caddress_text = useRef()
+    const [ballots, setBallots] = useState([])
 
-    useEffect(() => {
+    if (typeof window.ethereum === 'undefined') {
+        console.log(`MetaMask isn't installed installed!`);
+        alert("install Metamask");
+    }
 
-        if (typeof window.ethereum === 'undefined') {
-            console.log(`MetaMask isn't installed installed!`);
-            alert("install Metamask");
-        }
-
-        if (gas !== 0)
-            return;
+    if (gas === 0) {
 
         const func = async () => {
 
@@ -34,8 +33,12 @@ export function DeployComp(props) {
 
             const contract = new (new Web3(window.ethereum)).eth.Contract(abi)
             const h2ms = (h) => h * (3600 * 100)
-            const ballots_addr = ["0x90f8bf6a479f320ead074411a4b0e7944ea8c9c1", "0xffcf8fdee72ac11b5c542428b35eef5769c409f0"]
-            const names = ['a', 'b']
+            let ballots_addr = []
+            let names = []
+            if (ballots.length !== 0) {
+                ballots_addr = ballots.map(ballot => ballot.address)
+                names = ballots.map(ballot => ballot.name)
+            }
             const gas = await contract.deploy({
                 data: bin,
                 arguments: [h2ms(1), ballots_addr, names]
@@ -45,47 +48,58 @@ export function DeployComp(props) {
 
         }
         func()
-    }, [])
+
+    }
 
     async function deploy(e) {
 
-
-
-        const eth = window.ethereum;
-        console.log(eth)
-
-        const web3 = new Web3(eth)
-        // await window.ethereum.enable()
-        const [address] = await eth.request({ method: 'eth_requestAccounts' });
-        console.log(address)
+        const web3 = new Web3(window.ethereum)
+        const [address] = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        console.log('address: ' + address)
 
         // read contract 
         const byteCode = await (fetch(ContByte).then(r => r.text()))
         const abi = JSON.parse(await (fetch(ContAbi).then(r => r.text())))
-        const h2ms = (h) => h * (3600 * 100)
-        const names = ['a', 'b']
-        const ballots_addr = ["0x90f8bf6a479f320ead074411a4b0e7944ea8c9c1", "0xffcf8fdee72ac11b5c542428b35eef5769c409f0"]
         const contract = new web3.eth.Contract(abi)
-        const gas = await contract.deploy({
-            data: "0x" + byteCode,
-            arguments: [h2ms(1), ballots_addr, names]
-        }).estimateGas({
-            from: address
-        })
-        const dep = contract.deploy({
-            data: "0x" + byteCode,
-            arguments: [h2ms(1), ballots_addr, names]
-        }).send({
-            from: address,
-            gasLimit: web3.utils.toHex(gas + 100),
-            gasPrice: web3.utils.toHex(web3.utils.toWei('20', 'Gwei'))
-        })
-            .on('receipt', (res) => {
-                setCAddress(res.contractAddress)
-                // handleContractAddress(res.contractAddress)
-                contractHandler.setter(res.contractAddress)
+        const h2ms = (h) => h * (3600 * 100)
+        let ballots_addr = ['0x90f8bf6a479f320ead074411a4b0e7944ea8c9c1', '0xffcf8fdee72ac11b5c542428b35eef5769c409f0']
+        let names = ['a', 'b']
+        if (ballots.length !== 0) {
+            ballots_addr = ballots.map(ballot => ballot.address)
+            names = ballots.map(ballot => ballot.name)
+        }
+        try {
+            const gas = await contract.deploy({
+                data: '0x'+byteCode,
+                arguments: [h2ms(1), ballots_addr, names]
+            }).estimateGas({
+                from: address
             })
-            .on('error', err => console.log(err))
+
+            console.log('gas: ' + gas)
+            contract.deploy({
+                data: "0x" + byteCode,
+                arguments: [h2ms(1), ballots_addr, names]
+            }).send({
+                from: address,
+                gas: web3.utils.toHex(6000000)
+            })
+                .on('receipt', (res) => {
+
+                    setCAddress(res.contractAddress)
+                    console.log(res.contractAddress)
+                    // handleContractAddress(res.contractAddress)
+                    contractHandler.setter(res.contractAddress)
+                })
+                .on('error', err => {
+                    console.log(err)
+                    console.log('this error')
+                })
+
+        }
+        catch (err) {
+            alert(`couldn't deploy`)
+        }
     }
 
     async function enterContract(e) {
@@ -98,9 +112,14 @@ export function DeployComp(props) {
                 <h2>Deployment or enter contract</h2>
                 <div>approximated gas: {gas}</div>
 
+                <BallotsList dataHandle={{ data: ballots, dataSet: (val) => setBallots(val) }} />
+
+
                 <div>
                     <button onClick={deploy}>Deploy</button> contract address: {cAddress}
                 </div>
+
+
                 <div>
                     Contract Address: <input className='text-box' type={'text'} ref={Caddress_text} />
                     <button onClick={enterContract}>enter</button>
@@ -164,11 +183,23 @@ export function Voting(props) {
 
         if (contractHandler.addr != null) {
             fetch(ContAbi).then(async (res) => {
+                const [address] = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                console.log(contractHandler.addr)
                 const abi = JSON.parse(await res.text())
+                console.log(abi)
                 const web3 = web3Ref.current
                 contractRef.current = new web3.eth.Contract(abi, contractHandler.addr)
                 const contract = contractRef.current
-                const ballots_addr = await contract.methods.getBallotsAddr().call()
+                let ballots_addr;
+                try {
+                    ballots_addr = await contract.methods.getBallotsAddr().call({
+                        from : address
+                    })
+                }
+                catch(e){
+                    console.log('here')
+                }
+                console.log(ballots_addr)
                 const ballots = ballots_addr.map(async (address_ballot) => {
                     const ballot = await contract.methods.ballot(address_ballot).call()
                     return {
